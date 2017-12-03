@@ -1,0 +1,64 @@
+-- import --
+mongoimport -d db -c credits --type csv --file credits.csv --headerline
+mongoimport -d db -c movies --type csv --file movies.csv --headerline
+
+
+
+-One to few Design
+	-Actors and the movies they've starred in
+	{
+		_id: 		<ObjectId>,
+		actor_id:	<actor_id>,
+		name: 		<actor_name>,
+		movies: [
+			{<movie>},
+			{<movie>},
+			{<movie>}...
+		]
+	}
+
+
+
+-Validators / Constraints
+
+I did not implement validators.
+If I did implement them I would put an type integer validator on actor_id and a string validator on name.
+If it is possible I would set a size constraint on name.
+
+
+
+/*
+		QUERIES
+*/
+
+-- All documents --
+db.actors.find().pretty()
+
+
+
+-- Embedded array data based on selected criteria (name) / Projection --
+-- Get actor movies array --
+db.actors.find({"name":'Jennifer Lawrence'}, {"_id":0, "actor_id":0 , "name":0}).pretty()
+
+
+
+-- Sorted output --
+-- Sort all actors alphabetically --
+db.actors.find({}, {"_id":0, "actor_id":0, "movies":0}).sort({"name": 1}).limit(50)
+
+
+
+-- Aggregation --
+-- Number of movies actor has been in --
+db.actors.aggregate([{$match: {'name': 'Samuel L. Jackson'}} , {$project : {movie_count: {$size: "$movies"}}}])
+
+
+
+-- Update --
+-- Add new movie to actors movies --
+
+-- Find new movie which you want to add to actors movies
+newMovie = db.movies.findOne()
+
+-- Add newMovie to actors (Sam Worthington in this example) movie embedded array
+db.actors.update({"name": "Sam Worthington"}, { $push: {"movies": { newMovie }}})
